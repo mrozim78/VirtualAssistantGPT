@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenAIService();
-//setupAction => { setupAction.ApiKey = "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";
+
  
 //} ) ;
 builder.Services.AddRazorPages();
