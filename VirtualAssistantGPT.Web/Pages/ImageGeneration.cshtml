@@ -1,0 +1,30 @@
+﻿@page
+@model VirtualAssistantGPT.Web.Pages.ImageGenerationModel
+@{
+    
+    <h1>Image generation</h1>
+    <form class="form" method="post">
+        <div class="form-group">
+            <label asp-for="@Model.Question">Image description</label>
+            <textarea class="form-control" asp-for="@Model.Question"></textarea>
+        </div>
+         @if (!string.IsNullOrEmpty(Model.Error))
+         {
+            <div class="form-group">
+                <label asp-for="@Model.Error">Error</label>
+                <textarea disabled class="form-control" asp-for="@Model.Error"></textarea>
+            </div>
+         }
+        <input type="submit" class="btn btn-primary" value="Generate image" />
+    </form>
+   
+       
+   @if (!string.IsNullOrEmpty(Model.ImageSrc))
+   {
+        <h2>Image generation result</h2>
+         <img src="@Model.ImageSrc"/>
+   }
+      
+  
+  
+}

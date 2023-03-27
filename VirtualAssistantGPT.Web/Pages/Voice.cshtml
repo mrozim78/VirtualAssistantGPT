@@ -1,0 +1,32 @@
+﻿@page
+@model VirtualAssistantGPT.Web.Pages.VoiceModel
+@{
+ 
+    <h1>Voice transcription</h1>
+    <form class="form" method="post" enctype="multipart/form-data">
+      
+        <div class="form-group">
+            <input class="form-control"  type="file" asp-for="Upload" />
+        </div>
+         
+         
+         @if (!string.IsNullOrEmpty(Model.Answer))
+            {
+                <div class="form-group">
+                    <label asp-for="@Model.Answer">Answer</label>
+                    <textarea disabled class="form-control" asp-for="@Model.Answer"></textarea>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.Error))
+            {
+                <div class="form-group">
+                    <label asp-for="@Model.Error">Error</label>
+                    <textarea disabled class="form-control" asp-for="@Model.Error"></textarea>
+                </div>
+            }
+        <input type="submit" class="btn btn-primary" value="transcription"/>
+    </form>
+
+    
+
+}

@@ -1,0 +1,29 @@
+﻿@page
+@model VirtualAssistantGPT.Web.Pages.TextCompletionModel
+@{
+     <h1>Text completion</h1>
+      <form class="form" method="post">
+        <div class="form-group">
+            <label asp-for="@Model.Question">Completion</label>
+            <textarea class="form-control" asp-for="@Model.Question"></textarea>
+            
+        </div>
+        @if (!string.IsNullOrEmpty(Model.Answer))
+        {
+            <div class="form-group">
+                <label asp-for="@Model.Answer">Answer</label>
+            <textarea disabled class="form-control" asp-for="@Model.Answer"></textarea>
+        </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="form-group">
+                <label asp-for="@Model.Error">Error</label>
+            <textarea disabled class="form-control" asp-for="@Model.Error"></textarea>
+        </div>
+        }
+        <input type="submit" class="btn btn-primary" value="Completion" />
+      </form>
+      
+     
+ }

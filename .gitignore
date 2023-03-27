@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+/.vs
+/VirtualAssistantGPT.Web/bin
+/VirtualAssistantGPT.Web/obj
+/VirtualAssistantGPT.Web/appsettings.Development.json

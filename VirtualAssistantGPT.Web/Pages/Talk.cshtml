@@ -1,0 +1,217 @@
+﻿@page
+@model VirtualAssistantGPT.Web.Pages.TalkModel
+@{
+    <h1>Talking to bot</h1>
+    <div id="recordPage">
+        <h2>Record audio and upload it</h2>
+        <button id="startBtn" onclick="butRecordAudioStart_Click();" class="btn btn-primary">Start Record</button>
+        <button id="stopBtn" onclick="butRecordAudioStop_Click();" class="btn btn-primary">Stop</button>
+        <!--<button id="downloadBtn" onclick="butDownloadBlob_Click();" class="btn btn-primary">Download Audio</button>-->
+        <button id="updateBtn" onclick="butUploadBlob_Click();" class="btn btn-primary">Upload Audio</button>
+    </div>
+    <form id="uploadForm" method="post" enctype="multipart/form-data" asp-page-handler="upload" >
+        <input type="file" asp-for="Upload" />
+        <input type="submit" />
+    </form>
+    <div id="completionPage">
+        <h2>Send completion</h2>
+        <form id="completionForm" method="post" asp-page-handler="completion">
+            <div class="form-group">
+                <label asp-for="Completion">Completion</label>
+                <textarea class="form-control" rows="5" asp-for="Completion"></textarea>
+                <input type="submit" class="btn btn-primary" value="Completion"/>
+            </div>
+        </form>
+    </div>
+
+    <div id="completionAnswerPage">
+        <h2>Send to listen the answer</h2>
+        <form id="completionAnswerForm" method="post" asp-page-handler="say">
+            <div class="form-group">
+                <label>Completion</label>
+                <textarea id="completionText" class="form-control" rows="5" disabled></textarea>
+            </div>
+            <div class="form-group">
+                <label asp-for="Answer">Answer</label>
+                <textarea class="form-control" rows="5" asp-for="Answer"></textarea>
+                <input type="submit" class="btn btn-primary" value="Say">
+            </div>
+        </form>
+    </div>
+}
+<script>
+
+    $("#uploadForm").hide();
+    $("#completionPage").hide();
+    $("#completionAnswerPage").hide();
+    $("#stopBtn").prop("disabled", true);
+    $("#downloadBtn").prop("disabled", true);
+    $("#updateBtn").prop("disabled", true);
+
+    $("#completionForm").submit(function( event ) {
+        event.preventDefault();
+        var form = $("#completionForm");
+        var formdata = new FormData(form[0]);
+        fetch(form.attr("action"), {
+            method: 'POST',
+            body: formdata
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                $("#completionText").text(data.completionText);
+                $("#Answer").text(data.answer);
+                $("#completionPage").hide();
+                $("#completionAnswerPage").show();
+            });
+    });
+
+    $("#completionAnswerForm").submit(function (event) {
+        event.preventDefault();
+
+        event.preventDefault();
+        let context;
+        let request;
+        let source;
+
+        var form = $("#completionAnswerForm");
+        context = new AudioContext();
+        request = new XMLHttpRequest();
+        request.open(
+            "POST",
+            form.attr("action"),
+            true
+        );
+
+        request.responseType = "arraybuffer";
+        var formdata = new FormData(form[0]);
+
+        request.onload = () => {
+            context.decodeAudioData(request.response, (buffer) => {
+                source = context.createBufferSource();
+                source.buffer = buffer;
+                source.connect(context.destination);
+                // autoplay
+                source.start(0); // start was previously noteOn
+            });
+        };
+
+        request.send(formdata);
+
+
+    });
+
+    var BlazorAudioRecorder = {};
+
+    (function () {
+        var mStream;
+        var mAudioChunks;
+        var mMediaRecorder;
+        var mCaller;
+        var pAudioUrl;
+        var pAudioBlob;
+
+        BlazorAudioRecorder.StartRecord = async function () {
+            mStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mMediaRecorder = new MediaRecorder(mStream);
+            mMediaRecorder.addEventListener('dataavailable', vEvent => {
+                mAudioChunks.push(vEvent.data);
+            });
+
+            mMediaRecorder.addEventListener('error', vError => {
+                console.warn('media recorder error: ' + vError);
+            });
+
+            mMediaRecorder.addEventListener('stop', () => {
+                pAudioBlob = new Blob(mAudioChunks, { type: "audio/mp3;" });
+                pAudioUrl = URL.createObjectURL(pAudioBlob);
+            });
+
+            mAudioChunks = [];
+            mMediaRecorder.start();
+            $("#startBtn").prop("disabled", true);
+            $("#stopBtn").prop("disabled", false);
+            $("#downloadBtn").prop("disabled", true);
+            $("#updateBtn").prop("disabled", true);
+        };
+
+
+
+        BlazorAudioRecorder.StopRecord = function () {
+            mMediaRecorder.stop();
+            mStream.getTracks().forEach(pTrack => pTrack.stop());
+            $("#startBtn").prop("disabled", true);
+            $("#stopBtn").prop("disabled", true);
+            $("#downloadBtn").prop("disabled", false);
+            $("#updateBtn").prop("disabled", false);
+        };
+
+        BlazorAudioRecorder.DownloadBlob = function (vName) {
+            // Create a link element
+            const link = document.createElement("a");
+
+            // Set the link's href to point to the Blob URL
+            link.href = pAudioUrl;
+            link.download = vName;
+
+            // Append link to the body
+            document.body.appendChild(link);
+
+            // Dispatch click event on the link
+            // This is necessary as link.click() does not work on the latest firefox
+            link.dispatchEvent(
+                new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                })
+            );
+
+            // Remove the link from the body
+            document.body.removeChild(link);
+            $("#startBtn").prop("disabled", false);
+            $("#stopBtn").prop("disabled", true);
+            $("#downloadBtn").prop("disabled", true);
+            $("#updateBtn").prop("disabled", true);
+        };
+
+        BlazorAudioRecorder.UploadBlob = function (vName) {
+
+            var form = $("#uploadForm");
+            var formdata = new FormData(form[0]);
+            formdata.set("Upload", pAudioBlob, vName);
+            fetch(form.attr("action"), {
+                method: 'POST',
+                body: formdata
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    $("#Completion").text(data.answer);
+                    $("#recordPage").hide();
+                    $("#completionPage").show();
+                });
+            $("#startBtn").prop("disabled", false);
+            $("#stopBtn").prop("disabled", true);
+            $("#downloadBtn").prop("disabled", true);
+            $("#updateBtn").prop("disabled", true);
+
+
+
+        };
+    })();
+
+    function butRecordAudioStart_Click() {
+        BlazorAudioRecorder.StartRecord();
+    }
+    function butRecordAudioStop_Click() {
+        BlazorAudioRecorder.StopRecord();
+    }
+
+
+    function butDownloadBlob_Click() {
+        BlazorAudioRecorder.DownloadBlob("MyRecording_Test.mp3");
+    }
+
+    function butUploadBlob_Click() {
+        BlazorAudioRecorder.UploadBlob("MyRecording_Test.mp3");
+    }
+</script>

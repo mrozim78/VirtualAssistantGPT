@@ -1,0 +1,67 @@
+﻿@page
+@model VirtualAssistantGPT.Web.Pages.ChatModel
+@{
+   <h1>Chat</h1>
+   <h2>Historia chatu</h2>
+   <ul class="list-group" id="historyChat">
+   </ul>
+  
+
+    <form class="form" method="post" id="formChat">
+        <div class="form-group">
+            <label asp-for="@Model.Message">Text to say</label>
+            <textarea class="form-control" asp-for="@Model.Message" rows="5"></textarea>
+        </div>
+        <input type="submit" class="btn btn-primary"  value="Chat" />
+    </form>
+}
+<script>
+    var messageHistory = [];
+    messageHistory.push({ role: "system" , text:"To ja twój przyjazny asystent."});
+   //messageHistory.push({ role: "user", text:"Jak się nazywasz bocie"});
+   // messageHistory.push({ role: "assistant" , text:"Mam na imię marek"});
+    function setMessageHistory()
+    {
+        $("#historyChat").empty();
+        messageHistory.forEach(
+            element => 
+            {
+                if (element.role == "system")
+                {
+                    $("#historyChat").append("<li class='list-group-item list-group-item-primary'><b>System</b>:" + element.text + "</li>");
+                }
+                if (element.role == "assistant")
+                {
+                    $("#historyChat").append("<li class='list-group-item list-group-item-info'><b>Assistant</b>: " + element.text + "</li>");
+                }
+                if (element.role == "user") {
+                    $("#historyChat").append("<li class='list-group-item'><b>User</b>: " + element.text + "</li>");
+                }
+            }
+        );
+    }
+    //setMessageHistory();
+    $("#formChat").submit(function (event) {
+        console.log("Test");
+        event.preventDefault();
+        var form = $("#formChat");
+        var formdata = new FormData(form[0]);
+        //var formdata = new FormData();
+        messageHistory.forEach(element => formdata.append("HistoryRole", element.role));
+        messageHistory.forEach(element => formdata.append("HistoryText", element.text));
+        //formdata.append("History","test");
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formdata
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                messageHistory = data;
+                setMessageHistory();
+                $("#Message").val("");
+            });
+    });
+    setMessageHistory();
+
+
+</script>
