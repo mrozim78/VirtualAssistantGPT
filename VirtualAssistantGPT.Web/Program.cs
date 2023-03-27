@@ -8,7 +8,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenAIService();
 
  
-//} ) ;
 builder.Services.AddRazorPages();
 IConfiguration requiredService = builder.Services.BuildServiceProvider().GetRequiredService<IConfiguration>();
 builder.Services.Configure<AWSCredentialsOptions>(requiredService.GetSection("AWSCredentialsOptions"));
